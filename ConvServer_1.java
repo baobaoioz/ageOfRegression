@@ -105,6 +105,30 @@ public class ConvServer_1 {
 		} catch (IOException e) {
 			System.err.println("Connection Error");
 		}
+		// remove
+		try {
+			Socket notifySocket=new Socket("baobaoioz.koding.io",23456);
+			PrintWriter out = new PrintWriter(notifySocket.getOutputStream(),true);
+			BufferedReader in = new BufferedReader(new InputStreamReader(
+					notifySocket.getInputStream()));
+			out.println("remove baobaoioz.koding.io "+port);
+			String tempMsg,msg=null;
+			while ((tempMsg = in.readLine()) != null) {
+				msg=tempMsg;
+//				System.out.println("msg from discover:"+msg);
+			}
+			if (msg.toLowerCase().equals("success")) {
+				System.out.println("Remove success");
+			} else {
+				System.out.println("Remove failed.");
+			}
+			// close IO streams, then socket
+			out.close();
+			in.close();
+			notifySocket.close();
+		} catch (Exception e) {
+			System.out.println("Remove failed.");
+		}
 		System.exit(0);
 	}
 }

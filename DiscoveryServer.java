@@ -1,12 +1,9 @@
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -15,14 +12,6 @@ import java.util.Map.Entry;
 public class DiscoveryServer {
 
 	private static HashMap<IPAddressAndPort, String> convAddressMap = new HashMap<IPAddressAndPort, String>();
-
-	private static ArrayList<String> convList = new ArrayList<String>();
-
-	private static File f;
-
-	private static int[][] matrix = new int[5][5];
-
-	private static HashMap<String, Integer> indexMap = new HashMap<String, Integer>();
 
 	public static void main(String[] args) {
 
@@ -112,14 +101,20 @@ public class DiscoveryServer {
 	}
 
 	private static void getConvAddress(String type, PrintWriter out) {
+		// for (Entry<String, IPAddressAndPort> entry :
+		// convAddressMap.entrySet()) {
+		// System.out.println(entry.getKey()+" key="+entry.getValue().address+":"+entry.getValue().port);
+		// }
 		String paras[] = type.split(" ");
 		IPAddressAndPort addr = null;
 		if (paras.length != 2) {
-			out.println("Wrong argument.\nUsage: lookup ft in");
+			out.println("Wrong argument.\nUsage: get ft in");
 			return;
 		}
-
-		for (Entry<IPAddressAndPort, String> entry : convAddressMap.entrySet()) {
+		Iterator<Entry<IPAddressAndPort, String>> iterator = convAddressMap
+				.entrySet().iterator();
+		while (iterator.hasNext()) {
+			Entry<IPAddressAndPort, String> entry = iterator.next();
 			if (entry.getValue().equals(
 					paras[0].toLowerCase() + " " + paras[1].toLowerCase())
 					|| entry.getValue().equals(
@@ -129,18 +124,9 @@ public class DiscoveryServer {
 				return;
 			}
 		}
+
 		// unsupported conversion type
 		out.println("none");
-
-		// if ((addr = convAddressMap.get(paras[0].toLowerCase() + " "
-		// + paras[1].toLowerCase())) != null
-		// || (addr = convAddressMap.get(paras[1].toLowerCase() + " "
-		// + paras[0].toLowerCase())) != null) {
-		// out.println(addr.address + " " + addr.port);
-		// } else {
-		// // unsupported conversion type
-		// out.println("none");
-		// }
 	}
 
 	/**
@@ -170,41 +156,11 @@ public class DiscoveryServer {
 		if (!existed) {
 			convAddressMap.put(ap,
 					paras[0].toLowerCase() + " " + paras[1].toLowerCase());
-			updateMatrix(paras[0], paras[1], "add");
 			out.println("SUCCESS");
 		} else {
 			out.println("FAILURE: existed");
 		}
 		System.out.println("size=" + convAddressMap.size());
-	}
-
-	private static void updateMatrix(String type1, String type2, String action) {
-		int indexOfType1 = indexMap.get(type1), indexOfType2 = indexMap
-				.get(type2);
-		if (action.equals("add")) {
-			matrix[indexOfType1][indexOfType2] = 1;
-			matrix[indexOfType2][indexOfType1] = 1;
-		} else if (action.equals("remove")) {
-			// check if there exists same conversion type provided by other
-			// server
-			boolean exists = false;
-
-			for (Entry<IPAddressAndPort, String> entry : convAddressMap
-					.entrySet()) {
-				if ((type1.toLowerCase() + " " + type2.toLowerCase())
-						.equals(entry.getValue())
-						|| (type2.toLowerCase() + " " + type1.toLowerCase())
-								.equals(entry.getValue())) {
-					exists = true;
-					break;
-				}
-			}
-			if (!exists) {
-				matrix[indexOfType1][indexOfType2] = 0;
-				matrix[indexOfType2][indexOfType1] = 0;
-			}
-		}
-
 	}
 
 	/**
@@ -221,18 +177,17 @@ public class DiscoveryServer {
 			return;
 		}
 		IPAddressAndPort addr = new IPAddressAndPort();
-		String success=null;
-		Iterator<Entry<IPAddressAndPort, String>> iterator = convAddressMap.entrySet().iterator();
-		Entry<IPAddressAndPort, String> entry;
+		Iterator<Entry<IPAddressAndPort, String>> iterator = convAddressMap
+				.entrySet().iterator();
+		boolean success=false;
 		while (iterator.hasNext()) {
-			entry = iterator.next();
-			if (entry.getKey().equals(new IPAddressAndPort(paras[0], Integer.parseInt(paras[1])))) {
-				success=entry.getValue();
+			Entry<IPAddressAndPort, String> entry = iterator.next();
+			if (entry.getKey().address.equals(paras[0]) && entry.getKey().port==Integer.parseInt(paras[1])) {
 				iterator.remove();
+				success=true;
 			}
 		}
-		if (success != null) {
-			updateMatrix(success.split(" ")[0], success.split(" ")[1], "remove");
+		if (success) {
 			out.println("SUCCESS");
 		} else {
 			out.println("FAILURE");
@@ -251,14 +206,6 @@ public class DiscoveryServer {
 			e.printStackTrace();
 		}
 
-	}
-
-	static {
-		indexMap.put("ft", 0);
-		indexMap.put("in", 1);
-		indexMap.put("cm", 2);
-		indexMap.put("m", 3);
-		indexMap.put("km", 4);
 	}
 
 }
